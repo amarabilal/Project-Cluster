@@ -1,0 +1,20 @@
+<html>
+<body>
+<h1>Cluster Project</h1>
+
+<button onclick="callAPI()">Call backend</button>
+
+<pre id="result"></pre>
+
+<script>
+function callAPI(){
+ fetch("/api")
+ .then(r=>r.json())
+ .then(d=>{
+   document.getElementById("result").innerText = JSON.stringify(d)
+ })
+}
+</script>
+
+</body>
+</html>
