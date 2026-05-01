@@ -6,7 +6,7 @@ Architecture conteneurisée et orchestrée sur **K3s** (Kubernetes), déployant 
 
 ## Architecture
 
-```
+```text
 Internet
     │
     ▼
@@ -37,15 +37,15 @@ Internet
 
 ## Stack technique
 
-| Couche      | Technologie              |
-|-------------|--------------------------|
-| Frontend    | Nginx 1.27-alpine        |
-| Backend     | Node.js 20 / Express     |
-| Base de données | PostgreSQL 16        |
-| Orchestration | K3s (Kubernetes)       |
-| Ingress     | Traefik (intégré K3s)    |
-| Stockage    | PVC local-path (5 Gi)    |
-| Config      | ConfigMap + Secret K8s   |
+| Couche          | Technologie            |
+|-----------------|------------------------|
+| Frontend        | Nginx 1.27-alpine      |
+| Backend         | Node.js 20 / Express   |
+| Base de données | PostgreSQL 16          |
+| Orchestration   | K3s (Kubernetes)       |
+| Ingress         | Traefik (intégré K3s)  |
+| Stockage        | PVC local-path (5 Gi)  |
+| Config          | ConfigMap + Secret K8s |
 
 ---
 
@@ -123,8 +123,12 @@ kubectl rollout status deployment/frontend -n cluster-project
 # 7. Ingress
 kubectl apply -f k8s/60-ingress/ingress.yaml
 
+# 8. HPA (autoscaling)
+kubectl apply -f k8s/70-hpa/hpa.yaml
+
 # Vérification globale
 kubectl get all -n cluster-project
+kubectl get hpa -n cluster-project
 ```
 
 ---
@@ -180,7 +184,7 @@ kubectl get secret app-tls -n cluster-project
 
 Configurer `/etc/hosts` (poste local) :
 
-```
+```text
 <MASTER_IP>  app.local
 ```
 
@@ -287,7 +291,7 @@ chmod +x scripts/cleanup.sh
 
 ## Structure du dépôt
 
-```
+```text
 cluster-project/
 ├── apps/
 │   ├── backend/
@@ -318,15 +322,15 @@ cluster-project/
 
 ## Barème couvert
 
-| Critère                              | Points |
-|--------------------------------------|--------|
-| Cluster K3s (1 master + 2 workers)   | 2/2    |
-| Déploiement (front ×3, back ×2, BDD) | 5/5    |
-| Persistance (PVC, StatefulSet)        | 2/2    |
-| Sécurité (Secret K8s + HTTPS TLS)    | 2/2    |
-| Exposition (Traefik Ingress + DNS)   | 2/2    |
-| Documentation & scripts              | 2/2    |
-| **Total**                            | **15/15** |
+| Critère | Points |
+| --- | --- |
+| Cluster K3s (1 master + 2 workers) | 2/2 |
+| Deploiement (front x3, back x2, BDD) | 5/5 |
+| Persistance (PVC, StatefulSet) | 2/2 |
+| Securite (Secret K8s + HTTPS TLS) | 2/2 |
+| Exposition (Traefik Ingress + DNS) | 2/2 |
+| Documentation & scripts | 2/2 |
+| **Total** | **15/15** |
 
 ### Bonus implémentés
 
@@ -340,12 +344,32 @@ cluster-project/
 
 ## Captures d'écran
 
-| Fichier                              | Preuve                         |
-|--------------------------------------|--------------------------------|
-| `Test-auto-recovery.png`             | Pod supprimé → recréé auto     |
-| `Test-auto-recovery-mac.png`         | Idem, vue macOS                |
-| `Test-persistance.png`               | Données après suppression pod  |
-| `Test-scale.png`                     | Scale up frontend/backend      |
-| `Test-url-https.png`                 | Accès HTTPS `app.local`        |
-| `Test-etat-final.png`                | État final du cluster          |
-| `Pods-ContainerCreating.png`         | Démarrage initial des pods     |
+### Démarrage initial des pods
+
+![Pods ContainerCreating](docs/screenshots/Pods-ContainerCreating.png)
+
+### État final du cluster
+
+![Etat final](docs/screenshots/Test-etat-final.png)
+
+### Scale up frontend / backend
+
+![Scale](docs/screenshots/Test-scale.png)
+
+### Auto-recovery — pod supprimé et recréé automatiquement
+
+![Auto-recovery](docs/screenshots/Test-auto-recovery.png)
+
+![Auto-recovery mac](docs/screenshots/Test-auto-recovery-mac.png)
+
+### Persistance — données intactes après suppression du pod PostgreSQL
+
+![Persistance](docs/screenshots/Test-persistance.png)
+
+### HTTPS — accès via app.local
+
+![HTTPS](docs/screenshots/Test-url-https.png)
+
+### HPA — métriques autoscaling en temps réel
+
+![HPA Metriques](docs/screenshots/Metriques.png)
