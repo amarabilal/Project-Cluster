@@ -332,13 +332,41 @@ cluster-project/
 | Documentation & scripts | 2/2 |
 | **Total** | **15/15** |
 
-### Bonus implémentés
+### Rapport des bonus implémentés
 
-| Bonus                                    | Points |
-|------------------------------------------|--------|
-| Resource Requests & Limits (QoS)         | +1     |
-| Node Affinity (BDD épinglée)             | +1     |
-| Autoscaling horizontal HPA (CPU + RAM)   | +1     |
+#### Bonus 1 — Resource Requests & Limits / QoS (+1)
+
+Fichiers : `k8s/40-backend/backend.yaml`, `k8s/50-frontend/frontend.yaml`
+
+Chaque conteneur déclare des `requests` (garantie CPU/RAM) et des `limits` (plafond) :
+
+| Composant | CPU request | CPU limit | RAM request | RAM limit |
+| --- | --- | --- | --- | --- |
+| Backend | 50m | 200m | 64Mi | 256Mi |
+| Frontend | 25m | 150m | 32Mi | 128Mi |
+
+Cela place les pods en QoS **Burstable** et protège les nœuds contre la surconsommation.
+
+#### Bonus 2 — Node Affinity / BDD épinglée sur le master (+1)
+
+Fichier : `k8s/30-db/postgres.yaml`
+
+Le StatefulSet PostgreSQL utilise `preferredDuringSchedulingIgnoredDuringExecution` avec le label `node-role.kubernetes.io/master` pour privilégier le nœud master. Cela garantit que la base de données tourne sur le nœud le plus stable du cluster tout en restant portable sur n'importe quel cluster.
+
+#### Bonus 3 — Autoscaling horizontal HPA (+1)
+
+Fichier : `k8s/70-hpa/hpa.yaml`
+
+Deux HPA surveillent CPU et mémoire en temps réel via `metrics-server` (intégré K3s) :
+
+| Deployment | Min replicas | Max replicas | Seuil CPU | Seuil RAM |
+| --- | --- | --- | --- | --- |
+| backend | 2 | 6 | 70 % | 80 % |
+| frontend | 3 | 9 | 70 % | 80 % |
+
+**Preuve en production :** sous charge (`busybox` boucle infinie sur `/api`), le CPU backend est monté à 176 % → le HPA a automatiquement scalé de 2 à 6 replicas en moins de 60 secondes. Après arrêt de la charge, retour à 2 replicas après le cooldown de 5 minutes.
+
+Capture : `docs/screenshots/Metriques.png`
 
 ---
 
